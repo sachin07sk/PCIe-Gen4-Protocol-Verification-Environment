@@ -27,29 +27,29 @@ The environment covers:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Transaction Layer                                       │
-│  Creates/consumes TLPs                                   │
-│  MRd, MWr, CfgRd, CfgWr, Cpl, CplD                    │
+│  Transaction Layer                                      │
+│  Creates/consumes TLPs                                  │
+│  MRd, MWr, CfgRd, CfgWr, Cpl, CplD                      │
 ├─────────────────────────────────────────────────────────┤
-│  Data Link Layer                                         │
+│  Data Link Layer                                        │
 │  Reliability — ACK/NAK, retry buffer, LCRC              │
 │  Flow control credits — Posted, Non-Posted, Completion  │
 ├─────────────────────────────────────────────────────────┤
-│  Physical Layer                                          │
+│  Physical Layer                                         │
 │  128b/130b encoding, LTSSM link training                │
-│  16 GT/s per lane (Gen4)                               │
+│  16 GT/s per lane (Gen4)                                │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ### PCIe Generation Comparison
 
-| Generation | Speed      | Encoding  | BW/Lane  | x16 BW   |
-|-----------|------------|-----------|----------|----------|
-| Gen1      | 2.5 GT/s   | 8b/10b    | 0.25 GB/s| 4 GB/s   |
-| Gen2      | 5.0 GT/s   | 8b/10b    | 0.50 GB/s| 8 GB/s   |
-| Gen3      | 8.0 GT/s   | 128b/130b | 0.98 GB/s| 16 GB/s  |
+| Generation | Speed      | Encoding  | BW/Lane  | x16 BW     |
+|-----------|------------|-----------|----------|-------------|
+| Gen1      | 2.5 GT/s   | 8b/10b    | 0.25 GB/s| 4 GB/s      |
+| Gen2      | 5.0 GT/s   | 8b/10b    | 0.50 GB/s| 8 GB/s      |
+| Gen3      | 8.0 GT/s   | 128b/130b | 0.98 GB/s| 16 GB/s     |
 | **Gen4**  | **16 GT/s**| 128b/130b | 1.97 GB/s| **32 GB/s** |
-| Gen5      | 32 GT/s    | 128b/130b | 3.94 GB/s| 64 GB/s  |
+| Gen5      | 32 GT/s    | 128b/130b | 3.94 GB/s| 64 GB/s     |
 
 ---
 
@@ -139,15 +139,15 @@ Initial credits in this environment:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  pcie_test                                               │
+│  pcie_test                                              │
 │  ┌───────────────────────────────────────────────────┐  │
 │  │  pcie_env                                         │  │
-│  │  ┌──────────────────────┐  ┌──────────────────┐  │  │
-│  │  │  pcie_agent          │  │  pcie_scoreboard  │  │  │
-│  │  │  ┌────────────────┐  │  └──────────────────┘  │  │
-│  │  │  │ pcie_sequencer │  │  ┌──────────────────┐  │  │
-│  │  │  └───────┬────────┘  │  │  pcie_coverage    │  │  │
-│  │  │          │            │  └──────────────────┘  │  │
+│  │  ┌──────────────────────┐  ┌──────────────────┐   │  │
+│  │  │  pcie_agent          │  │  pcie_scoreboard │   │  │
+│  │  │  ┌────────────────┐  │  └──────────────────┘   │  │
+│  │  │  │ pcie_sequencer │  │  ┌──────────────────┐   │  │
+│  │  │  └───────┬────────┘  │  │  pcie_coverage   │   │  │
+│  │  │          │           │  └──────────────────┘   │  │
 │  │  │  ┌───────▼────────┐  │                         │  │
 │  │  │  │  pcie_driver   │  │                         │  │
 │  │  │  └────────────────┘  │                         │  │
@@ -168,7 +168,7 @@ Initial credits in this environment:
 
 ## Test Sequences
 
-| Sequence               | Description                                 |
+| Sequence               | Description                                |
 |-----------------------|---------------------------------------------|
 | pcie_memwr_seq        | Single memory write TLP                     |
 | pcie_memrd_seq        | Single memory read + CplD response          |
@@ -183,8 +183,8 @@ Initial credits in this environment:
 
 ## Scoreboard Checks
 
-| Check              | Condition                                  | Result |
-|-------------------|---------------------------------------------|--------|
+| Check             | Condition                                   | Result    |
+|-------------------|---------------------------------------------|-----------|
 | MemWr → MemRd     | Read data must match written data           | PASS/FAIL |
 | CfgRd response    | Vendor/Device ID must not be X (unknown)    | PASS/FAIL |
 | Poisoned TLP      | EP flag must be detected and flagged        | PASS/FAIL |
@@ -194,11 +194,11 @@ Initial credits in this environment:
 
 ## Functional Coverage
 
-| Covergroup       | Bins                                         | Target |
+| Covergroup      | Bins                                         | Target |
 |-----------------|----------------------------------------------|--------|
-| TLP Type        | MWr, MRd, CfgRd, CfgWr, Poisoned            | 100%   |
-| Burst Length    | 1 beat, 2-4 beats, 5-8 beats                | 100%   |
-| Address Range   | 0x000-0x0FF, 0x100-0x1FF, 0x200-0x3FF      | 100%   |
+| TLP Type        | MWr, MRd, CfgRd, CfgWr, Poisoned             | 100%   |
+| Burst Length    | 1 beat, 2-4 beats, 5-8 beats                 | 100%   |
+| Address Range   | 0x000-0x0FF, 0x100-0x1FF, 0x200-0x3FF        | 100%   |
 
 ---
 
