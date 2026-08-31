@@ -1,0 +1,82 @@
+`include "pcie_pkg.vh"
+//
+// pcie_cfg_space.v -- Configuration Space register file.
+//
+// SCOPE: PCI-compatible header (Vendor/Device ID, Command/Status, Class Code,
+// BAR0-1, Type-0 vs Type-1 discriminated by IS_RC) plus a minimal PCIe
+// capability stub (Link Control/Status showing current speed/width from LTSSM).
+// SIMPLIFIED (Known Limitation): no extended config space (PCIe Express
+// Capability details beyond link status), no MSI/MSI-X capability structures.
+//
+module pcie_cfg_space #(
+  parameter IS_RC = 0
+) (
+  input  wire        clk,
+  input  wire         rst_n,
+
+  input  wire         cfg_wr_valid,
+  input  wire [11:0]  cfg_addr,     // byte address into config space
+  input  wire [31:0]  cfg_wdata,
+  output reg          cfg_wr_done,
+
+  input  wire         cfg_rd_valid,
+  output reg  [31:0]  cfg_rdata,
+  output reg          cfg_rd_done,
+
+  // live link status, wired from pcie_ltssm
+  input  wire  [3:0]  ltssm_state,
+  input  wire         link_up
+);
+
+  reg [31:0] vendor_device_id;   // 0x00
+  reg [31:0] command_status;     // 0x04
+  reg [31:0] class_rev;          // 0x08
+  reg [31:0] bar0;               // 0x10
+  reg [31:0] bar1;               // 0x14
+  reg [31:0] header_type;        // 0x0C  bit23 = Type1 (RC/bridge) vs Type0 (EP)
+
+  wire [31:0] link_status = {16'h0, 12'h0, link_up, ltssm_state[2:0]};
+
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      vendor_device_id <= 32'hFEED_CAFE; // placeholder VID/DID
+      command_status   <= 32'h0000_0000;
+      class_rev        <= IS_RC ? 32'h0604_0001 /* bridge, host-to-PCI */
+                                 : 32'h0180_0001 /* mass storage-ish placeholder */;
+      header_type      <= IS_RC ? 32'h0080_0000 : 32'h0000_0000;
+      bar0             <= 32'h0;
+      bar1             <= 32'h0;
+      cfg_wr_done      <= 1'b0;
+      cfg_rd_done      <= 1'b0;
+      cfg_rdata        <= 32'h0;
+    end else begin
+      cfg_wr_done <= 1'b0;
+      cfg_rd_done <= 1'b0;
+
+      if (cfg_wr_valid) begin
+        case (cfg_addr[7:2])
+          6'h01: command_status <= cfg_wdata; // command/status is R/W
+          6'h04: bar0           <= cfg_wdata;
+          6'h05: bar1           <= cfg_wdata;
+          default: ; // vendor/device id, class/rev, header type are RO
+        endcase
+        cfg_wr_done <= 1'b1;
+      end
+
+      if (cfg_rd_valid) begin
+        case (cfg_addr[7:2])
+          6'h00: cfg_rdata <= vendor_device_id;
+          6'h01: cfg_rdata <= command_status;
+          6'h02: cfg_rdata <= class_rev;
+          6'h03: cfg_rdata <= header_type;
+          6'h04: cfg_rdata <= bar0;
+          6'h05: cfg_rdata <= bar1;
+          6'h10: cfg_rdata <= link_status; // PCIe cap: link status/control (stub offset)
+          default: cfg_rdata <= 32'h0;
+        endcase
+        cfg_rd_done <= 1'b1;
+      end
+    end
+  end
+
+endmodule
